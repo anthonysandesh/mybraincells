@@ -8,17 +8,42 @@ async function getPageProperties(
   block: BlockMap,
   schema: CollectionPropertySchemaMap
 ) {
+  const getSelectValues = (val: any) => {
+    const selects = getTextContent(val)
+    if (!selects) return []
+    return selects
+      .split(",")
+      .map((item) => item.trim())
+      .filter(Boolean)
+  }
+
   const api = new NotionAPI()
   const rawProperties = Object.entries(block?.[id]?.value?.properties || [])
-  const excludeProperties = ["date", "select", "multi_select", "person", "file"]
+  const excludeProperties = [
+    "date",
+    "select",
+    "multi_select",
+    "status",
+    "person",
+    "file",
+  ]
   const properties: any = {}
   for (let i = 0; i < rawProperties.length; i++) {
     const [key, val]: any = rawProperties[i]
+    const schemaType = schema[key]?.type as string | undefined
     properties.id = id
-    if (schema[key]?.type && !excludeProperties.includes(schema[key].type)) {
+    if (schemaType === "status") {
+      const values = getSelectValues(val)
+      if (values.length) {
+        properties[schema[key].name] = values
+      }
+      continue
+    }
+
+    if (schemaType && !excludeProperties.includes(schemaType)) {
       properties[schema[key].name] = getTextContent(val)
     } else {
-      switch (schema[key]?.type) {
+      switch (schemaType) {
         case "file": {
           try {
             const Block = block?.[id].value
@@ -37,16 +62,16 @@ async function getPageProperties(
           break
         }
         case "select": {
-          const selects = getTextContent(val)
-          if (selects[0]?.length) {
-            properties[schema[key].name] = selects.split(",")
+          const values = getSelectValues(val)
+          if (values.length) {
+            properties[schema[key].name] = values
           }
           break
         }
         case "multi_select": {
-          const selects = getTextContent(val)
-          if (selects[0]?.length) {
-            properties[schema[key].name] = selects.split(",")
+          const values = getSelectValues(val)
+          if (values.length) {
+            properties[schema[key].name] = values
           }
           break
         }

@@ -13,6 +13,8 @@ const current = new Date()
 const tomorrow = new Date(current)
 tomorrow.setDate(tomorrow.getDate() + 1)
 tomorrow.setHours(0, 0, 0, 0)
+const getFirstValue = <T>(value: T | T[] | undefined) =>
+  Array.isArray(value) ? value[0] : value
 
 export function filterPosts(
   posts: TPosts,
@@ -23,17 +25,26 @@ export function filterPosts(
     // filter data
     .filter((post) => {
       const postDate = new Date(post?.date?.start_date || post.createdTime)
-      if (!post.title || !post.slug || postDate > tomorrow) return false
+      const postTime = postDate.getTime()
+      if (
+        !post.title ||
+        !post.slug ||
+        Number.isNaN(postTime) ||
+        postTime > tomorrow.getTime()
+      )
+        return false
       return true
     })
     // filter status
     .filter((post) => {
-      const postStatus = post.status[0]
+      const postStatus = getFirstValue(post.status)
+      if (!postStatus) return false
       return acceptStatus.includes(postStatus)
     })
     // filter type
     .filter((post) => {
-      const postType = post.type[0]
+      const postType = getFirstValue(post.type)
+      if (!postType) return false
       return acceptType.includes(postType)
     })
   return filteredPosts
