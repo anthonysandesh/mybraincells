@@ -28,15 +28,7 @@ export const getStaticPaths = async () => {
 }
 
 export const getStaticProps: GetStaticProps = async (context) => {
-  const slug = Array.isArray(context.params?.slug)
-    ? context.params?.slug[0]
-    : context.params?.slug
-  if (!slug) {
-    return {
-      notFound: true,
-      revalidate: CONFIG.revalidateTime,
-    }
-  }
+  const slug = context.params?.slug
 
   const posts = await getPosts()
   const feedPosts = filterPosts(posts)
@@ -44,13 +36,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
 
   const detailPosts = filterPosts(posts, filter)
   const postDetail = detailPosts.find((t: any) => t.slug === slug)
-  if (!postDetail?.id) {
-    return {
-      notFound: true,
-      revalidate: CONFIG.revalidateTime,
-    }
-  }
-  const recordMap = await getRecordMap(postDetail.id)
+  const recordMap = await getRecordMap(postDetail?.id!)
 
   await queryClient.prefetchQuery(queryKey.post(`${slug}`), () => ({
     ...postDetail,
@@ -76,14 +62,13 @@ const DetailPage: NextPageWithLayout = () => {
     `${CONFIG.ogImageGenerateURL}/${encodeURIComponent(post.title)}.png`
 
   const date = post.date?.start_date || post.createdTime || ""
-  const type = Array.isArray(post.type) ? post.type[0] : post.type
 
   const meta = {
     title: post.title,
     date: new Date(date).toISOString(),
     image: image,
     description: post.summary || "",
-    type: type || "website",
+    type: post.type[0],
     url: `${CONFIG.link}/${post.slug}`,
   }
 
