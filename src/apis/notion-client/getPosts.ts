@@ -13,29 +13,15 @@ import { TPosts } from "src/types"
 // TODO: react query를 사용해서 처음 불러온 뒤로는 해당데이터만 사용하도록 수정
 export const getPosts = async () => {
   let id = CONFIG.notionConfig.pageId as string
-  if (!id) {
-    console.error(
-      "[notion] Missing page id. Set NOTION_PAGE_ID or NEXT_PUBLIC_NOTION_PAGE_ID."
-    )
-    return []
-  }
-
   const api = new NotionAPI()
 
-  let response
-  try {
-    response = await api.getPage(id)
-  } catch (error) {
-    console.error("[notion] Failed to fetch posts from Notion", error)
-    return []
-  }
-
+  const response = await api.getPage(id)
   id = idToUuid(id)
   const collection = Object.values(response.collection)[0]?.value
   const block = response.block
   const schema = collection?.schema
 
-  const rawMetadata = block?.[id]?.value
+  const rawMetadata = block[id].value
 
   // Check Type
   if (
@@ -49,15 +35,13 @@ export const getPosts = async () => {
     const data = []
     for (let i = 0; i < pageIds.length; i++) {
       const id = pageIds[i]
-      const blockValue = block?.[id]?.value
-      if (!blockValue) continue
-
       const properties = (await getPageProperties(id, block, schema)) || null
-      if (!properties) continue
-
       // Add fullwidth, createdtime to properties
-      properties.createdTime = new Date(blockValue?.created_time).toString()
-      properties.fullWidth = (blockValue?.format as any)?.page_full_width ?? false
+      properties.createdTime = new Date(
+        block[id].value?.created_time
+      ).toString()
+      properties.fullWidth =
+        (block[id].value?.format as any)?.page_full_width ?? false
 
       data.push(properties)
     }

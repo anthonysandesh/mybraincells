@@ -15,24 +15,22 @@ const PostDetail: React.FC<Props> = () => {
   if (!data) return null
 
   const category = (data.category && data.category?.[0]) || undefined
-  const type = Array.isArray(data.type) ? data.type[0] : data.type
-  const status = Array.isArray(data.status) ? data.status[0] : data.status
 
   return (
     <StyledWrapper>
       <article>
         {category && (
           <div css={{ marginBottom: "0.5rem" }}>
-            <Category readOnly={status === "PublicOnDetail"}>
+            <Category readOnly={data.status?.[0] === "PublicOnDetail"}>
               {category}
             </Category>
           </div>
         )}
-        {type === "Post" && <PostHeader data={data} />}
+        {data.type[0] === "Post" && <PostHeader data={data} />}
         <div>
           <NotionRenderer recordMap={data.recordMap} />
         </div>
-        {type === "Post" && (
+        {data.type[0] === "Post" && (
           <>
             <Footer />
             <CommentBox data={data} />
